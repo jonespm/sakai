@@ -16,6 +16,7 @@
 
     <modules>
         <module>editor-tool/tool</module>
+        <module>webjars-tool/tool</module>
         <module>portal-api/api</module>
         <module>portal-charon/charon</module>
         <module>portal-chat/tool</module>
