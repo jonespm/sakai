@@ -333,16 +333,6 @@
 				element = (element.nodeType == 1 || element.nodeType == 9) ? element : element.parentNode;
 				deleteFileItem(element);
 
-				## Remove the deleted item from calendars' array
-				for (var i = 0; document.calendars != null && i < document.calendars.length; i++)
-				{
-					if (!document.getElementById(document.calendars[i][0]))
-					{
-						document.calendars.splice(i, 1);
-						document.calendarcounter--;
-						i--;
-					}
-				}
 			}
 		}
 		return false;
@@ -671,6 +661,7 @@
 	function copyTree(root, index)
 	{
 		var newElement;
+		var scriptsToRun = new Array();
 		if(!root || typeof root == "undefined")
 		{
 			return null;
@@ -703,7 +694,11 @@
 				for(var i = 0; i < root.childNodes.length; i++)
 				{
 					var newChild = copyTree(root.childNodes[i], index);
-					if(newChild)
+					if (newChild && root.tagName == "SCRIPT") {
+						newChild.nodeValue = newChild.nodeValue.replace(/${DOT}\d+/g,"${DOT}"+index);
+						scriptsToRun.push(newChild.nodeValue);
+					}
+					else 
 					{
 						newElement.appendChild(newChild);
 					}
@@ -744,23 +739,11 @@
 			{
 				newElement.selectedIndex = 4;
 			}
-			else if(root.id.match(/^chef_calendarhiddenfield\d+$/))
+			if(root.id.match( /^release_year${DOT}\d+$/ ) )
 			{
-				var calcount = document.calendarcounter++;
-				newElement.id = "chef_calendarhiddenfield" + calcount;
-				newElement.name = "chef_calendarhiddenfield" + calcount;
-			}
-			if( root.id.match( /^release_year${DOT}\d+$/ ) )
-			{
-				## This depends on the year selection element coming before the corresponding hidden input element
-				var calcount = document.calendarcounter;
-				document.calendars[calcount] = new Array("release_year${DOT}" + index, "release_month${DOT}" + index, "release_day${DOT}" + index, "chef_calendarhiddenfield" + calcount);
 			}
 			else if(root.id.match(/^retract_year${DOT}\d+$/))
 			{
-				## This depends on the year selection element coming before the corresponding hidden input element
-				var calcount = document.calendarcounter;
-				document.calendars[calcount] = new Array("retract_year${DOT}" + index, "retract_month${DOT}" + index, "retract_day${DOT}" + index, "chef_calendarhiddenfield" + calcount);
 			}
 			else if(root.id.match(/^metadataShown_[\S]+${DOT}\d+$/))
 			{
@@ -784,6 +767,10 @@
 			}
 			
 		}
+		//Run all of the javascript we queued up
+		scriptsToRun.forEach(function(script) {
+			eval(script);
+		});
 		return newElement;
 	}
 	function updateId(old_id, index)
@@ -1590,20 +1577,5 @@
 	
 	attachEventHandlers();
 	
-#if($calendarcounter > 0)	
-	document.calendars = new Array();
-	document.calendarcounter = $calendarcounter;
-#set($n = $calendarcounter - 1)
-#foreach($i in [0 .. $n])
-#set($caldata = $calendarMap.get("$i"))
-#if($caldata)
-	document.calendars[$i] = new Array('$caldata.get(0)', '$caldata.get(1)', '$caldata.get(2)', '$caldata.get(3)');
-#end
-#end
-#end
 -->
 </script>
-#if($calendarcounter > 0)
-#javascript("/library/calendar/sakai-calendar.js")
-#javascript("/library/calendar/js/calendar2.js")
-#end
