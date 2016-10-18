@@ -2,6 +2,8 @@
 include file for delivering multiple choice questions
 should be included in file importing DeliveryMessages
 --%>
+<%@ taglib uri="http://myfaces.apache.org/tomahawk" prefix="t"%>
+
 <!--
 <%--
 ***********************************************************************************
@@ -45,6 +47,7 @@ should be included in file importing DeliveryMessages
         disabled="#{delivery.actionString=='reviewAssessment'
                  || delivery.actionString=='gradeAssessment'}" />
      <f:verbatim><div class="mcAnswerText"></f:verbatim>
+     <h:outputLabel value="#{selection.answer.text}"/>
      <h:outputText value=" #{selection.answer.label}" escape="false" />
      <h:outputText value="#{deliveryMessages.dot}" rendered="#{selection.answer.label ne ''}" />
      <h:outputText value=" #{selection.answer.text}" escape="false" />

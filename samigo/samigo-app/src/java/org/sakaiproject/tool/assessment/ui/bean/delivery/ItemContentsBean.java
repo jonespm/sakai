@@ -1030,7 +1030,7 @@ public class ItemContentsBean implements Serializable {
 		List<SelectItem> selectItemParts = new ArrayList<SelectItem>();
 		
 		for(SelectionBean selection: selectionArray) {			
-			selectItemParts.add(new SelectItem(selection.getAnswerId(), ""));
+			selectItemParts.add(new SelectItem(selection.getAnswerId(), selection.getAnswer().getText()));
 		}
 		
 		return selectItemParts;

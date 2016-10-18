@@ -64,6 +64,10 @@ should be included in file importing DeliveryMessages
     <div class="mcscFixUpTarget"></div>
 	<h:panelGroup> 	 
       <div class="mcAnswerText">
+          <h:outputLabel value="#{selection.answer.text}">
+            <f:converter converterId="org.sakaiproject.tool.assessment.jsf.convert.AnswerSurveyConverter" />
+          </h:outputLabel>
+          
 	  <h:outputText value=" #{selection.answer.label}" escape="false" /> 	 
 	  <h:outputText value=". " rendered="#{selection.answer.label ne ''}" /> 	 
 	  <h:outputText value="#{selection.answer.text}" styleClass="mcAnswerText" escape="false" >
