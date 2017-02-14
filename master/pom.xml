@@ -130,6 +130,23 @@
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
     <!-- Default empty unless profile activation -->
     <random-source></random-source>
+
+    <!-- These are Web Jars properties referenced throughout the code and in reference -->
+    <org.webjars.codemirror.version>5.6</org.webjars.codemirror.version> 
+    <org.webjars.ckeditor.version>4.5.7</org.webjars.ckeditor.version> 
+    <org.webjars.dropzone.version>4.2.0</org.webjars.dropzone.version> 
+    <org.webjars.momentjs.version>2.11.1</org.webjars.momentjs.version> 
+    <org.webjars.jquery.version>1.11.3</org.webjars.jquery.version> 
+    <org.webjars.jquery-migrate.version>1.4.0</org.webjars.jquery-migrate.version> 
+    <org.webjars.jquery-ui.version>${org.webjars.jquery.version}</org.webjars.jquery-ui.version> 
+    <org.webjars.jquery-ui-themes.version>${org.webjars.jquery.version}</org.webjars.jquery-ui-themes.version> 
+    <org.webjars.jquery-ui-touch-punch.version>0.2.3-2</org.webjars.jquery-ui-touch-punch.version> 
+    <org.webjars.bootstrap.version>3.3.7</org.webjars.bootstrap.version> 
+    <org.webjars.jquery-blockui.version>2.65</org.webjars.jquery-blockui.version> 
+    <org.webjars.bower.jquery-i18n-properties.version>1.2.2</org.webjars.bower.jquery-i18n-properties.version> 
+    <org.webjars.pnotify.version>2.1.0-1</org.webjars.pnotify.version> 
+    <org.webjars.elfinder.version>2.1.12</org.webjars.elfinder.version> 
+    <org.webjars.bower.fontawesome.version>4.7.0</org.webjars.bower.fontawesome.version> 
   </properties>
   <distributionManagement>
     <snapshotRepository>
