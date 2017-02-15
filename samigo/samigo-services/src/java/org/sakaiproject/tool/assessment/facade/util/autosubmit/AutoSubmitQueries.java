@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import org.sakaiproject.event.cover.EventTrackingService;
 import org.sakaiproject.samigo.util.SamigoConstants;
@@ -29,6 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AutoSubmitQueries extends HibernateDaoSupport implements AutoSubmitQueriesAPI
 {
+	private static ResourceBundle eventLogMessages = ResourceBundle.getBundle("org.sakaiproject.tool.assessment.bundle.EventLogMessages");
+	
 	@Override
 	public boolean autoSubmitSingleAssessment(AssessmentGradingData adata, boolean autoSubmit, boolean updateCurrentGrade, PublishedAssessmentFacade publishedAssessment, 
 			PersistenceHelper persistenceHelper, boolean updateGrades, EventLogService eventService, EventLogFacade eventLogFacade,
@@ -81,8 +84,7 @@ public class AutoSubmitQueries extends HibernateDaoSupport implements AutoSubmit
 				List eventLogDataList = eventService.getEventLogData(gradingId);
 				if (!eventLogDataList.isEmpty()) {
 					EventLogData eventLogData= (EventLogData) eventLogDataList.get(0);
-					//will do the i18n issue later.
-					eventLogData.setErrorMsg("No Errors (Auto submit)");
+					eventLogData.setErrorMsg(eventLogMessages.getString("no_error_auto_submit"));					
 					Date endDate = new Date();
 					eventLogData.setEndDate(endDate);
 					if(eventLogData.getStartDate() != null) {
@@ -90,8 +92,8 @@ public class AutoSubmitQueries extends HibernateDaoSupport implements AutoSubmit
 						int eclipseTime = (int)Math.ceil(((endDate.getTime() - eventLogData.getStartDate().getTime())/minute));
 						eventLogData.setEclipseTime(eclipseTime); 
 					} else {
-						eventLogData.setEclipseTime(null); 
-						eventLogData.setErrorMsg("Error during auto submit");
+						eventLogData.setEclipseTime(null);
+						eventLogData.setErrorMsg(eventLogMessages.getString("error_auto_submit"));						
 					}
 					eventLogFacade.setData(eventLogData);
 					eventService.saveOrUpdateEventLog(eventLogFacade);
