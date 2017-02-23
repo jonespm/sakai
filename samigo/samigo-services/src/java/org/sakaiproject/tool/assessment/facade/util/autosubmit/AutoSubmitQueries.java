@@ -97,6 +97,7 @@ public class AutoSubmitQueries extends HibernateDaoSupport implements AutoSubmit
 						eventLogData.setEclipseTime(eclipseTime); 
 					} else {
 						eventLogData.setEclipseTime(null);
+						//eventLogData.setErrorMsg(eventLogMessages.getString("error_during_auto_submit"));
 						eventLogData.setErrorMsg(rb.getString("error_during_auto_submit"));						
 					}
 					eventLogFacade.setData(eventLogData);
