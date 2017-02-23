@@ -23,6 +23,8 @@ import org.springframework.orm.hibernate4.support.HibernateDaoSupport;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.sakaiproject.util.ResourceLoader;
+
 /**
  * Queries for persisting a single attempt/submission and all related updates in a single transaction
  * @author plukasew
@@ -30,7 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AutoSubmitQueries extends HibernateDaoSupport implements AutoSubmitQueriesAPI
 {
-	private static ResourceBundle eventLogMessages = ResourceBundle.getBundle("org.sakaiproject.tool.assessment.bundle.EventLogMessages");
+	//private static ResourceBundle eventLogMessages = ResourceBundle.getBundle("org.sakaiproject.tool.assessment.bundle.EventLogMessages");
+	private static ResourceLoader rb = new ResourceLoader("org.sakaiproject.tool.assessment.bundle.Messages");
 	
 	@Override
 	public boolean autoSubmitSingleAssessment(AssessmentGradingData adata, boolean autoSubmit, boolean updateCurrentGrade, PublishedAssessmentFacade publishedAssessment, 
@@ -84,7 +87,8 @@ public class AutoSubmitQueries extends HibernateDaoSupport implements AutoSubmit
 				List eventLogDataList = eventService.getEventLogData(gradingId);
 				if (!eventLogDataList.isEmpty()) {
 					EventLogData eventLogData= (EventLogData) eventLogDataList.get(0);
-					eventLogData.setErrorMsg(eventLogMessages.getString("no_error_auto_submit"));					
+					//eventLogData.setErrorMsg(eventLogMessages.getString("no_error_auto_submit"));					
+					eventLogData.setErrorMsg(rb.getString("no_error_auto_submit"));
 					Date endDate = new Date();
 					eventLogData.setEndDate(endDate);
 					if(eventLogData.getStartDate() != null) {
@@ -93,7 +97,7 @@ public class AutoSubmitQueries extends HibernateDaoSupport implements AutoSubmit
 						eventLogData.setEclipseTime(eclipseTime); 
 					} else {
 						eventLogData.setEclipseTime(null);
-						eventLogData.setErrorMsg(eventLogMessages.getString("error_auto_submit"));						
+						eventLogData.setErrorMsg(rb.getString("error_during_auto_submit"));						
 					}
 					eventLogFacade.setData(eventLogData);
 					eventService.saveOrUpdateEventLog(eventLogFacade);
