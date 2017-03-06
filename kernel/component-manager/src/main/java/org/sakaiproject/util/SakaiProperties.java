@@ -46,6 +46,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.DefaultPropertiesPersister;
 import org.springframework.util.PropertiesPersister;
 
+import org.apache.commons.io.IOUtils;
+
 /**
  * A configurer for "sakai.properties" files. These differ from the usual Spring default properties
  * files by mixing together lines which define property-value pairs and lines which define
@@ -260,6 +262,7 @@ public class SakaiProperties implements BeanFactoryPostProcessorCreator, Initial
      */
     public class SakaiPropertiesFactoryBean implements FactoryBean, InitializingBean {
         public static final String XML_FILE_EXTENSION = ".xml";
+        public static final String JSON_FILE_EXTENSION = ".xml";
         final Logger log = LoggerFactory.getLogger(SakaiPropertiesFactoryBean.class);
         
         private Map<String, Properties> loadedProperties = new LinkedHashMap<String, Properties>();
@@ -390,6 +393,10 @@ public class SakaiProperties implements BeanFactoryPostProcessorCreator, Initial
                         is = location.getInputStream();
                         if (location.getFilename().endsWith(XML_FILE_EXTENSION)) {
                             this.propertiesPersister.loadFromXml(p, is);
+                        }
+                        else if (location.getFilename().endsWith(JSON_FILE_EXTENSION)) {
+                            String contents = IOUtils.toString(is, this.fileEncoding); 
+                            p.put(location.getFilename(),contents);
                         } else {
                             if (this.fileEncoding != null) {
                                 this.propertiesPersister.load(p, new InputStreamReader(is, this.fileEncoding));
