@@ -66,7 +66,15 @@ public class SakaiContextLoader extends ContextLoader
     @Override
     public WebApplicationContext initWebApplicationContext(ServletContext servletContext) throws BeansException {
 
-        ConfigurableWebApplicationContext cwac = (ConfigurableWebApplicationContext) super.initWebApplicationContext(servletContext);
+        ConfigurableWebApplicationContext cwac = null;
+        try {
+            cwac = (ConfigurableWebApplicationContext) super.initWebApplicationContext(servletContext);
+        }
+        catch (Exception e) {
+            log.warn("Exception loading " + servletContext.getServletContextName(), e);
+        }
+
+
         // optionally look in sakai home for additional bean deifinitions to load
 		if (cwac != null) {
 			final String servletName = servletContext.getServletContextName(); 

@@ -30,6 +30,8 @@ import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.impl.SakaiContextLoader;
 import org.sakaiproject.component.impl.SpringCompMgr;
 
+import org.springframework.web.context.ContextCleanupListener;
+
 /**
  * <p>
  * Sakai's extension to the Spring ContextLoaderListener - use our ContextLoader, and increment / decrement the child count of the ComponentManager on init / destroy.
@@ -58,7 +60,7 @@ public class SakaiContextLoaderListener extends SakaiContextLoader implements Se
 	public void contextDestroyed(ServletContextEvent event)
 	{
 		closeWebApplicationContext(event.getServletContext());
-		//ContextCleanupListener.cleanupAttributes(event.getServletContext());
+		new ContextCleanupListener().contextDestroyed(event);
 		
 		log.info("Destroying Components in "+event.getServletContext().getServletContextName());
 

@@ -42,8 +42,8 @@
 	<context-param>
 	  <param-name>contextConfigLocation</param-name>
 	  <param-value>
-	  	classpath:/org/sakaiproject/spring/integrationContext.xml,
-	    classpath:/org/sakaiproject/spring/samigoApi.xml,
+	  	classpath*:/org/sakaiproject/spring/integrationContext.xml,
+	    classpath*:/org/sakaiproject/spring/samigoApi.xml,
 	    classpath:conf/rsf-config.xml,
 	    classpath:conf/blank-applicationContext.xml,
 	    classpath:conf/sakai-applicationContext.xml,
