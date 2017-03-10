@@ -504,7 +504,9 @@ public class MessageBundleServiceImpl extends HibernateDaoSupport implements Mes
 				if (session != null) {
 					session.close();
 				}
-				TransactionSynchronizationManager.unbindResource(getSessionFactory());
+				if (TransactionSynchronizationManager.getResource(getSessionFactory()) != null) {                
+					TransactionSynchronizationManager.unbindResource(getSessionFactory());
+				}
 			}
         }
     }
