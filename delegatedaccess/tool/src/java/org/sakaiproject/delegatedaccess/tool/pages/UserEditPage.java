@@ -34,13 +34,14 @@ import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.behavior.AttributeAppender;
-import org.apache.wicket.extensions.markup.html.tree.DefaultAbstractTree;
+import org.apache.wicket.extensions.markup.html.repeater.tree.AbstractTree;
+import org.apache.wicket.extensions.markup.html.repeater.tree.DefaultNestedTree;
+import org.apache.wicket.extensions.markup.html.repeater.tree.NestedTree;
 import org.apache.wicket.extensions.markup.html.tree.table.ColumnLocation;
 import org.apache.wicket.extensions.markup.html.tree.table.ColumnLocation.Alignment;
 import org.apache.wicket.extensions.markup.html.tree.table.ColumnLocation.Unit;
 import org.apache.wicket.extensions.markup.html.tree.table.IColumn;
 import org.apache.wicket.extensions.markup.html.tree.table.PropertyTreeColumn;
-import org.apache.wicket.extensions.markup.html.tree.table.TreeTable;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Button;
@@ -48,7 +49,6 @@ import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextField;
-import org.apache.wicket.extensions.markup.html.repeater.tree.TableTree;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
@@ -63,6 +63,7 @@ import org.sakaiproject.delegatedaccess.utils.PropertyEditableColumnAdvancedUser
 import org.sakaiproject.delegatedaccess.utils.PropertyEditableColumnCheckbox;
 import org.sakaiproject.delegatedaccess.utils.PropertyEditableColumnDropdown;
 import org.sakaiproject.delegatedaccess.utils.PropertyEditableColumnList;
+import org.sakaiproject.delegatedaccess.tool.provider.UserTreeProvider;
 
 /**
  * Creates the UserEdit page to edit a user's access
@@ -71,9 +72,9 @@ import org.sakaiproject.delegatedaccess.utils.PropertyEditableColumnList;
  *
  */
 
-public class UserEditPage  extends BaseTreePage{
+public class UserEditPage extends BasePage{
 
-	private TreeTable tree;
+	private NestedTree tree;
 	private static final Logger log = LoggerFactory.getLogger(UserEditPage.class);
 	private String[] defaultRole = null;
 	List<String> accessAdminNodeIds = null;
@@ -82,8 +83,7 @@ public class UserEditPage  extends BaseTreePage{
 	private List<ListOptionSerialized> blankRestrictedTools;
 	private boolean modifiedAlert = false;
 	
-	@Override
-	protected DefaultAbstractTree getTree() {
+	protected AbstractTree getTree() {
 		return  tree;
 	}
 
@@ -103,17 +103,6 @@ public class UserEditPage  extends BaseTreePage{
 
 		//USER NAME & IMAGE:
 		add(new Label("userName", displayName));
-		//FORM:
-		Form form = new Form("form");
-		add(form);
-		//Filter Forum
-		Form filterForm = new Form("filterform");
-		add(filterForm);
-
-		//Expand Collapse Link:
-		filterForm.add(getExpandCollapseLink());
-
-		//Filter Search:
 		
 		//Dropdown
 		final ChoiceRenderer choiceRenderer = new ChoiceRenderer("label", "value");
@@ -126,82 +115,6 @@ public class UserEditPage  extends BaseTreePage{
 		for(int i = 0; i < hierarchy.length; i++){
 			hierarchyOptions.add(new SelectOption(hierarchy[i], "" + i));
 		}
-		final DropDownChoice filterHierarchyDropDown = new DropDownChoice("filterHierarchyLevel", filterHierarchydModel, hierarchyOptions, choiceRenderer);
-		filterHierarchyDropDown.setOutputMarkupPlaceholderTag(true);
-		filterForm.add(filterHierarchyDropDown);
-		//Filter Search field
-		final PropertyModel<String> filterSearchModel = new PropertyModel<String>(this, "filterSearch");
-		final TextField<String> filterSearchTextField = new TextField<String>("filterSearch", filterSearchModel);
-		filterSearchTextField.setOutputMarkupPlaceholderTag(true);
-		filterForm.add(filterSearchTextField);
-		//submit button:
-		filterForm.add(new AjaxButton("filterButton", new StringResourceModel("filter", null)){
-
-			@Override
-			protected void onSubmit(AjaxRequestTarget target, Form<?> arg1) {
-				DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) getTree().getModelObject().getRoot();
-				//check that no nodes have been modified
-				if(!modifiedAlert && anyNodesModified(rootNode)){
-					formFeedback.setDefaultModel(new ResourceModel("modificationsPending"));
-					formFeedback.add(new AttributeModifier("class", true, new Model("alertMessage")));
-					target.add(formFeedback);
-					formFeedback2.setDefaultModel(new ResourceModel("modificationsPending"));
-					formFeedback2.add(new AttributeModifier("class", true, new Model("alertMessage")));
-					target.add(formFeedback2);
-					modifiedAlert = true;
-					//call a js function to hide the message in 5 seconds
-					target.appendJavaScript("hideFeedbackTimer('" + formFeedbackId + "');");
-					target.appendJavaScript("hideFeedbackTimer('" + formFeedback2Id + "');");
-				}else{
-					//now go through the tree and make sure its been loaded at every level:
-					Integer depth = null;
-					if(filterHierarchy != null && filterHierarchy.getValue() != null && !"".equals(filterHierarchy.getValue().trim())){
-						try{
-							depth = Integer.parseInt(filterHierarchy.getValue());
-						}catch(Exception e){
-							//number format exception, ignore
-						}
-					}
-					if(depth != null && filterSearch != null && !"".equals(filterSearch.trim())){
-						expandTreeToDepth(rootNode, depth, userId, blankRestrictedTools, accessAdminNodeIds, false, false, false, filterSearch);
-						getTree().updateTree(target);
-					}
-					modifiedAlert = false;
-				}
-			}			
-		});
-		filterForm.add(new AjaxButton("filterClearButton", new StringResourceModel("clear", null)){
-
-			@Override
-			protected void onSubmit(AjaxRequestTarget target, Form<?> arg1) {
-				DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) getTree().getModelObject().getRoot();
-				//check that no nodes have been modified
-				if(!modifiedAlert && anyNodesModified(rootNode)){
-					formFeedback.setDefaultModel(new ResourceModel("modificationsPending"));
-					formFeedback.add(new AttributeModifier("class", true, new Model("alertMessage")));
-					target.add(formFeedback);
-					formFeedback2.setDefaultModel(new ResourceModel("modificationsPending"));
-					formFeedback2.add(new AttributeModifier("class", true, new Model("alertMessage")));
-					target.add(formFeedback2);
-					modifiedAlert = true;
-					//call a js function to hide the message in 5 seconds
-					target.appendJavaScript("hideFeedbackTimer('" + formFeedbackId + "');");
-					target.appendJavaScript("hideFeedbackTimer('" + formFeedback2Id + "');");
-				}else{
-					filterSearch = "";
-					filterHierarchy = null;
-					target.add(filterSearchTextField);
-					target.add(filterHierarchyDropDown);
-
-					((NodeModel) rootNode.getUserObject()).setAddedDirectChildrenFlag(false);
-					rootNode.removeAllChildren();				
-					getTree().getTreeState().collapseAll();
-					getTree().updateTree(target);
-					modifiedAlert = false;
-				}
-			}
-		});
-		
 		//tree:
 
 		//create a map of the realms and their roles for the Role column
@@ -261,104 +174,8 @@ public class UserEditPage  extends BaseTreePage{
 			}
 		}
 		
-		final TreeModel treeModel = projectLogic.createEntireTreeModelForUser(userId, true, false);		
 		//a null model means the tree is empty
-		tree = new TreeTable("treeTable", treeModel, columns){
-			@Override
-			public boolean isVisible() {
-				return treeModel != null;
-			}
-			protected void onNodeLinkClicked(AjaxRequestTarget target, TreeNode node) {
-				//the nodes are generated on the fly with ajax.  This will add any child nodes that 
-				//are missing in the tree.  Expanding and collapsing will refresh the tree node
-				
-				tree.getTreeState().selectNode(node, false);
-				
-				boolean anyAdded = false;
-				if(!tree.getTreeState().isNodeExpanded(node) && !((NodeModel) ((DefaultMutableTreeNode) node).getUserObject()).isAddedDirectChildrenFlag()){
-					anyAdded = projectLogic.addChildrenNodes(node, userId, blankRestrictedTools, false, accessAdminNodeIds, false, false);
-					((NodeModel) ((DefaultMutableTreeNode) node).getUserObject()).setAddedDirectChildrenFlag(true);
-				}
-				if(anyAdded){
-					collapseEmptyFoldersHelper((DefaultMutableTreeNode) node);
-				}
-				if(!tree.getTreeState().isNodeExpanded(node) || anyAdded){
-					tree.getTreeState().expandNode(node);
-				}else{
-					tree.getTreeState().collapseNode(node);
-				}
-			}
-			protected void onJunctionLinkClicked(AjaxRequestTarget target, TreeNode node) {
-				//the nodes are generated on the fly with ajax.  This will add any child nodes that 
-				//are missing in the tree.  Expanding and collapsing will refresh the tree node
-				if(tree.getTreeState().isNodeExpanded(node) && !((NodeModel) ((DefaultMutableTreeNode) node).getUserObject()).isAddedDirectChildrenFlag()){
-					boolean anyAdded = projectLogic.addChildrenNodes(node, userId, blankRestrictedTools, false, accessAdminNodeIds, false, false);
-					((NodeModel) ((DefaultMutableTreeNode) node).getUserObject()).setAddedDirectChildrenFlag(true);
-					if(anyAdded){
-						collapseEmptyFoldersHelper((DefaultMutableTreeNode) node);
-					}
-				}
-			}
-			@Override
-			protected boolean isForceRebuildOnSelectionChange() {
-				return true;
-			};		
-			
-			@Override
-			protected MarkupContainer newNodeLink(MarkupContainer parent, String id, TreeNode node) {
-				try{
-					parent.add(new AttributeAppender("title", new Model(((NodeModel) ((DefaultMutableTreeNode) node).getUserObject()).getNode().description), " "));
-				}catch(Exception e){
-					log.error(e.getMessage(), e);
-				}
-				return super.newNodeLink(parent, id, node);
-			}
-		};
-		if(singleRoleOptions){
-			tree.add(new AttributeAppender("class", new Model("noRoles"), " "));
-		}
-		form.add(tree);
-
-		//updateButton button:
-		AjaxButton updateButton = new AjaxButton("update", form) {
-			@Override
-			protected void onSubmit(AjaxRequestTarget target, Form arg1) {
-				try{
-					//save node access and roll information:
-					updateNodeAccess(userId, defaultRole);
-
-					//display a "saved" message
-					formFeedback.setDefaultModel(new ResourceModel("success.save"));
-					formFeedback.add(new AttributeModifier("class", true, new Model("success")));
-					target.add(formFeedback);
-					formFeedback2.setDefaultModel(new ResourceModel("success.save"));
-					formFeedback2.add(new AttributeModifier("class", true, new Model("success")));
-					target.add(formFeedback2);
-				}catch (Exception e) {
-					log.error(e.getMessage(), e);
-					formFeedback.setDefaultModel(new ResourceModel("failed.save"));
-					formFeedback.add(new AttributeModifier("class", true, new Model("alertMessage")));
-					target.add(formFeedback);
-					formFeedback2.setDefaultModel(new ResourceModel("failed.save"));
-					formFeedback2.add(new AttributeModifier("class", true, new Model("alertMessage")));
-					target.add(formFeedback2);
-				}
-				//call a js function to hide the message in 5 seconds
-				target.appendJavaScript("hideFeedbackTimer('" + formFeedbackId + "');");
-				target.appendJavaScript("hideFeedbackTimer('" + formFeedback2Id + "');");
-				modifiedAlert = false;
-			}
-		};
-		form.add(updateButton);
-
-		//cancelButton button:
-		Button cancelButton = new Button("cancel") {
-			@Override
-			public void onSubmit() {
-				setResponsePage(new SearchUsersPage());
-			}
-		};
-		form.add(cancelButton);
-
+		UserTreeProvider userTreeProvider = new UserTreeProvider();
+		tree = new DefaultNestedTree("treeTable", userTreeProvider);
 	}
 }
