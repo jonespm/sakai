@@ -30,8 +30,14 @@ import java.util.Set;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
+import org.apache.wicket.extensions.markup.html.repeater.tree.AbstractTree;
+import org.apache.wicket.extensions.markup.html.repeater.tree.DefaultNestedTree;
+import org.apache.wicket.extensions.markup.html.repeater.tree.NestedTree;
+import org.apache.wicket.extensions.markup.html.repeater.tree.content.Folder;
+import org.apache.wicket.extensions.markup.html.repeater.util.TreeModelProvider;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Button;
@@ -43,10 +49,6 @@ import org.apache.wicket.markup.html.form.RadioGroup;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.link.ExternalLink;
 import org.apache.wicket.markup.html.link.PopupSettings;
-import org.apache.wicket.extensions.markup.html.tree.AbstractTree;
-import org.apache.wicket.extensions.markup.html.tree.BaseTree;
-import org.apache.wicket.extensions.markup.html.tree.DefaultAbstractTree;
-import org.apache.wicket.extensions.markup.html.tree.LinkTree;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.markup.repeater.data.DataView;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
@@ -71,7 +73,7 @@ import org.sakaiproject.site.api.Site;
  */
 public class UserPage  extends BaseTreePage{
 
-	private BaseTree tree;
+	private NestedTree tree;
 	boolean expand = true;
 	private String search = "";
 	private String instructorField = "";
@@ -129,20 +131,43 @@ public class UserPage  extends BaseTreePage{
 		setTreeModel(userId, false);
 		
 		final List<ListOptionSerialized> blankRestrictedTools = projectLogic.getEntireToolsList();
+		final TreeModelProvider<DefaultMutableTreeNode> modelProvider;
+		
 		if(treeModel != null){
 			DefaultMutableTreeNode node = (DefaultMutableTreeNode) treeModel.getRoot();
 			if(((NodeModel) node.getUserObject()).isDirectAccess()){
 				projectLogic.addChildrenNodes(node, userId, blankRestrictedTools, true, null, false, isShoppingPeriodTool());
 			}
-		}
-		//a null model means the user doesn't have any associations
-		tree = new LinkTree("tree", treeModel){
-			@Override
-			public boolean isVisible() {
-				return treeModel != null
-						&& ((!sakaiProxy.getDisableUserTreeView() && !isShoppingPeriodTool()) || 
-								(!sakaiProxy.getDisableShoppingTreeView() && isShoppingPeriodTool()));
-			}
+
+			modelProvider = new TreeModelProvider<DefaultMutableTreeNode>(treeModel, false) {
+
+				/**
+				 * 
+				 */
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public IModel<DefaultMutableTreeNode> model(DefaultMutableTreeNode object) {
+					return Model.of(object);
+				}
+			};
+
+			//a null model means the user doesn't have any associations
+			tree = new NestedTree<DefaultMutableTreeNode>("tree", modelProvider){
+				@Override
+				public boolean isVisible() {
+					return modelProvider != null
+							&& ((!sakaiProxy.getDisableUserTreeView() && !isShoppingPeriodTool()) || 
+									(!sakaiProxy.getDisableShoppingTreeView() && isShoppingPeriodTool()));
+				}
+
+				@Override
+				protected Component newContentComponent(String id, IModel<DefaultMutableTreeNode> model)
+				{
+					return new Folder<DefaultMutableTreeNode>(id, this, model);
+				}
+				//TODO: FIX?
+				/*
 			protected void onNodeLinkClicked(Object node, BaseTree tree, AjaxRequestTarget target) {
 				if(tree.isLeaf(node)){
 					//The user has clicked a leaf and chances are its a site.
@@ -171,7 +196,7 @@ public class UserPage  extends BaseTreePage{
 					}
 				}
 			};
-			
+
 			protected void onJunctionLinkClicked(AjaxRequestTarget target, Object node) {
 				//the nodes are generated on the fly with ajax.  This will add any child nodes that 
 				//are missing in the tree.  Expanding and collapsing will refresh the tree node
@@ -183,15 +208,17 @@ public class UserPage  extends BaseTreePage{
 					}
 				}
 			}
-			
+
 			@Override
 			protected boolean isForceRebuildOnSelectionChange() {
 				return false;
 			};
-		};
-		tree.setRootLess(true);
-		add(tree);
-		tree.getTreeState().collapseAll();
+				 */
+			};
+			add(tree);
+			//TODO: FIX?
+			//tree.getTreeState().collapseAll();
+		}
 
 		//Access Warning:
 		Label noAccessLabel = new Label("noAccess"){

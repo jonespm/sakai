@@ -23,6 +23,7 @@ import javax.swing.tree.TreeNode;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.extensions.markup.html.repeater.tree.AbstractTree;
 import org.apache.wicket.markup.html.WebComponent;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
@@ -60,12 +61,13 @@ public class EditablePanelAdvancedUserOptions extends Panel{
 				//In order for the models to refresh, you have to call "expand" or "collapse" then "updateTree",
 				//since I don't want to expand or collapse, I just call whichever one the node is already
 				//Refreshing the tree will update all the models and information (like role) will be generated onClick
-				if(((BaseTreePage)target.getPage()).getTree().getTreeState().isNodeExpanded(node)){
-					((BaseTreePage)target.getPage()).getTree().getTreeState().expandNode(node);
+				if(AbstractTree.State.COLLAPSED.equals(((BaseTreePage)target.getPage()).getTree().getState(node))){
+					((BaseTreePage)target.getPage()).getTree().expand(node);
 				}else{
-					((BaseTreePage)target.getPage()).getTree().getTreeState().collapseNode(node);
+					((BaseTreePage)target.getPage()).getTree().collapse(node);
 				}
-				((BaseTreePage)target.getPage()).getTree().updateTree(target);
+				//TODO: FIX?
+				//((BaseTreePage)target.getPage()).getTree().updateTree(target);
 			}
 		};
 		advancedOptionsSpan.add(saveEditableSpanLink);

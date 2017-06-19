@@ -27,19 +27,23 @@ import javax.swing.tree.TreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.wicket.AttributeModifier;
+import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.request.resource.PackageResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.behavior.AttributeAppender;
-import org.apache.wicket.extensions.markup.html.tree.DefaultAbstractTree;
+import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
+import org.apache.wicket.extensions.markup.html.repeater.tree.AbstractTree;
+import org.apache.wicket.extensions.markup.html.repeater.tree.NestedTree;
+import org.apache.wicket.extensions.markup.html.repeater.tree.TableTree;
+import org.apache.wicket.extensions.markup.html.repeater.tree.content.Folder;
+import org.apache.wicket.extensions.markup.html.repeater.util.TreeModelProvider;
 import org.apache.wicket.extensions.markup.html.tree.table.ColumnLocation;
 import org.apache.wicket.extensions.markup.html.tree.table.ColumnLocation.Alignment;
 import org.apache.wicket.extensions.markup.html.tree.table.ColumnLocation.Unit;
-import org.apache.wicket.extensions.markup.html.tree.table.IColumn;
 import org.apache.wicket.extensions.markup.html.tree.table.PropertyTreeColumn;
-import org.apache.wicket.extensions.markup.html.tree.table.TreeTable;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.html.basic.Label;
@@ -50,6 +54,7 @@ import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.image.Image;
 import org.apache.wicket.markup.html.link.Link;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
@@ -71,7 +76,7 @@ import org.sakaiproject.delegatedaccess.utils.PropertyEditableColumnList;
  *
  */
 public class ShoppingEditPage extends BaseTreePage{
-	private TreeTable tree;
+	private TableTree tree;
 	private static final Logger log = LoggerFactory.getLogger(ShoppingEditPage.class);
 	private String[] defaultRole = null;
 	private SelectOption filterHierarchy;
@@ -82,8 +87,8 @@ public class ShoppingEditPage extends BaseTreePage{
 	public static final String SCRIPT_DATEPICKER = "javascript/init-datepicker.js";
 
 	@Override
-	protected DefaultAbstractTree getTree() {
-		return  tree;
+	protected AbstractTree getTree() {
+		return tree;
 	}
 
 	@Override
@@ -149,6 +154,8 @@ public class ShoppingEditPage extends BaseTreePage{
 		filterSearchTextField.setOutputMarkupPlaceholderTag(true);
 		filterForm.add(filterSearchTextField);
 		//submit button:
+		//TODO: FIX?
+		/*
 		filterForm.add(new AjaxButton("filterButton", new StringResourceModel("filter", null)){
 
 			@Override
@@ -178,7 +185,8 @@ public class ShoppingEditPage extends BaseTreePage{
 					}
 					if(depth != null && filterSearch != null && !"".equals(filterSearch.trim())){
 						expandTreeToDepth(rootNode, depth, DelegatedAccessConstants.SHOPPING_PERIOD_USER, blankRestrictedTools, null, false, true, false, filterSearch);
-						getTree().updateTree(target);
+						//TODO: FIX?
+						//getTree().updateTree(target);
 					}
 					modifiedAlert = false;
 				}
@@ -209,13 +217,15 @@ public class ShoppingEditPage extends BaseTreePage{
 
 					((NodeModel) rootNode.getUserObject()).setAddedDirectChildrenFlag(false);
 					rootNode.removeAllChildren();
-					getTree().getTreeState().collapseAll();
-					getTree().updateTree(target);
+					getTree().collapse();
+					//TODO: FIX?
+					//getTree().updateTree(target);
 					modifiedAlert = false;
 				}
 			}
 		});
 		
+		*/
 
 		//tree:
 
@@ -247,6 +257,8 @@ public class ShoppingEditPage extends BaseTreePage{
 		final TreeModel treeModel = projectLogic.createTreeModelForShoppingPeriod(sakaiProxy.getCurrentUserId());
 
 		List<IColumn> columnsList = new ArrayList<IColumn>();
+		//TODO: FIX?
+		/*
 		columnsList.add(new PropertyEditableColumnCheckbox(new ColumnLocation(Alignment.LEFT, 35, Unit.PX), "",	"userObject.directAccess", DelegatedAccessConstants.TYPE_ACCESS_SHOPPING_PERIOD_USER));
 		columnsList.add(new PropertyTreeColumn(new ColumnLocation(Alignment.MIDDLE, 100, Unit.PROPORTIONAL),	"", "userObject.node.description"));
 		if(!singleRoleOptions){
@@ -258,20 +270,49 @@ public class ShoppingEditPage extends BaseTreePage{
 		columnsList.add(new PropertyEditableColumnList(new ColumnLocation(Alignment.RIGHT, 120, Unit.PX), new StringResourceModel("showToolsHeader", null).getString(),
 				"userObject.restrictedAuthTools", DelegatedAccessConstants.TYPE_ACCESS_SHOPPING_PERIOD_USER, DelegatedAccessConstants.TYPE_LISTFIELD_TOOLS));
 		columnsList.add(new PropertyEditableColumnAdvancedOptions(new ColumnLocation(Alignment.RIGHT, 92, Unit.PX), new StringResourceModel("advanced", null).getString(), "userObject.shoppingPeriodRevokeInstructorEditable", DelegatedAccessConstants.TYPE_ACCESS_SHOPPING_PERIOD_USER));
-		IColumn columns[] = columnsList.toArray(new IColumn[columnsList.size()]);
+		*/
+		//IColumn columns[] = columnsList.toArray(new IColumn[columnsList.size()]);
+		List<IColumn<DefaultMutableTreeNode, String>> columns = new ArrayList<>();
+
 
 		final boolean activeSiteFlagEnabled = sakaiProxy.isActiveSiteFlagEnabled();
 		final ResourceReference inactiveWarningIcon = new PackageResourceReference(ShoppingEditPage.class, "images/bullet_error.png");
 		final ResourceReference instructorEditedIcon = new PackageResourceReference(ShoppingEditPage.class, "images/bullet_red.png");
 		//a null model means the tree is empty
-		tree = new TreeTable("treeTable", treeModel, columns){
-			@Override
-			public boolean isVisible() {
-				return treeModel != null;
-			}
+		final TreeModelProvider<DefaultMutableTreeNode> modelProvider;
+		if (treeModel != null) {
+			modelProvider = new TreeModelProvider<DefaultMutableTreeNode>(treeModel) {
+
+				/**
+				 * 
+				 */
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public IModel<DefaultMutableTreeNode> model(DefaultMutableTreeNode object) {
+					return Model.of(object);
+				}
+			};
+
+			tree = new TableTree<DefaultMutableTreeNode, String>("treeTable", columns, modelProvider, 50){
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public boolean isVisible() {
+					return modelProvider != null;
+				}
+
+				@Override
+				protected Component newContentComponent(String id, IModel<DefaultMutableTreeNode> model)
+				{
+					return new Folder<DefaultMutableTreeNode>(id, this, model);
+				}
+
+				//TODO: FIX?
+				/*
 			protected void onNodeLinkClicked(AjaxRequestTarget target, TreeNode node) {
 				tree.getTreeState().selectNode(node, false);
-				
+
 				boolean anyAdded = false;
 				if(!tree.getTreeState().isNodeExpanded(node) && !((NodeModel) ((DefaultMutableTreeNode) node).getUserObject()).isAddedDirectChildrenFlag()){
 					anyAdded = projectLogic.addChildrenNodes(node, DelegatedAccessConstants.SHOPPING_PERIOD_USER, blankRestrictedTools, false, null, true, false);
@@ -297,12 +338,12 @@ public class ShoppingEditPage extends BaseTreePage{
 					}
 				}
 			}
-			
+
 			@Override
 			protected boolean isForceRebuildOnSelectionChange() {
 				return true;
 			};
-			
+
 			protected ResourceReference getNodeIcon(TreeNode node) {
 				if(activeSiteFlagEnabled && !((NodeModel) ((DefaultMutableTreeNode) node).getUserObject()).isActive()){
 					return inactiveWarningIcon;
@@ -321,11 +362,13 @@ public class ShoppingEditPage extends BaseTreePage{
 				}
 				return super.newNodeLink(parent, id, node);
 			}
-		};
-		if(singleRoleOptions){
-			tree.add(new AttributeAppender("class", new Model("noRoles"), " "));
+				 */
+			};
+			if(singleRoleOptions){
+				tree.add(new AttributeAppender("class", new Model("noRoles"), " "));
+			}
+			form.add(tree);
 		}
-		form.add(tree);
 
 		//updateButton button:
 		AjaxButton updateButton = new AjaxButton("update", form) {
@@ -397,8 +440,8 @@ public class ShoppingEditPage extends BaseTreePage{
 		});
 		
 		//setup legend:
-		final ResourceReference nodeIcon = new PackageResourceReference(DefaultAbstractTree.class, "res/folder-closed.gif");
-		final ResourceReference siteIcon = new PackageResourceReference(DefaultAbstractTree.class, "res/item.gif");
+		final ResourceReference nodeIcon = new PackageResourceReference(AbstractTree.class, "res/folder-closed.gif");
+		final ResourceReference siteIcon = new PackageResourceReference(AbstractTree.class, "res/item.gif");
 		add(new Label("legend", new StringResourceModel("legend", null)));
 		add(new Image("legendNode", nodeIcon));
 		add(new Label("legendNodeDesc", new StringResourceModel("legendNodeDesc", null)));

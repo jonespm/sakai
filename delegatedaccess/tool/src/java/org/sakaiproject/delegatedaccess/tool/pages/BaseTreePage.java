@@ -31,11 +31,11 @@ import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.behavior.AttributeAppender;
+import org.apache.wicket.extensions.markup.html.repeater.tree.AbstractTree;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
-import org.apache.wicket.extensions.markup.html.tree.AbstractTree;
 import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.StringResourceModel;
@@ -70,7 +70,7 @@ public abstract class BaseTreePage extends BasePage
 	 */
 	protected void updateNodeAccess(String userId, String[] defaultRole){
 		if(getTree() != null){
-			DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) getTree().getModelObject().getRoot();
+			DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode) getTree().getProvider().getRoots().next();
 			if(rootNode != null){
 				updateNodeAccessHelper(rootNode, userId, defaultRole);
 			}
@@ -128,7 +128,7 @@ public abstract class BaseTreePage extends BasePage
 	 * folders haven't been populated yet)
 	 */
 	protected void collapseEmptyFolders(){
-		collapseEmptyFoldersHelper((DefaultMutableTreeNode) getTree().getModelObject().getRoot());
+		//collapseEmptyFoldersHelper((DefaultMutableTreeNode) getTree().getModelObject().getRoot());
 	}
 
 	/**
@@ -139,7 +139,7 @@ public abstract class BaseTreePage extends BasePage
 		if(node != null){
 			if(!node.isLeaf() && node.getChildCount() == 0){
 				//this is a node that isn't a leaf but hasn't had the children updated, make it collapse
-				getTree().getTreeState().collapseNode(node);
+				getTree().collapse(node);
 			}
 			for(int i = 0; i < node.getChildCount(); i++){
 				collapseEmptyFoldersHelper((DefaultMutableTreeNode)node.getChildAt(i));
@@ -158,15 +158,17 @@ public abstract class BaseTreePage extends BasePage
 			public void onClick(AjaxRequestTarget target)
 			{
 				if(expand){
-					getTree().getTreeState().expandAll();
+					//TODO: FIX
+					//getTree().getTreeState().expandAll();
 					expandCollapse.setDefaultModel(new StringResourceModel("collapseNodes", null));
 					collapseEmptyFolders();
 				}else{
-					getTree().getTreeState().collapseAll();
+					//TODO: FIX
+					//getTree().getTreeState().collapseAll();
 					expandCollapse.setDefaultModel(new StringResourceModel("exapndNodes", null));
 				}
 				target.add(expandCollapse);
-				getTree().updateTree(target);
+				//getTree().updateTree(target);
 				expand = !expand;
 
 			}
@@ -229,7 +231,7 @@ public abstract class BaseTreePage extends BasePage
 		projectLogic.addChildrenNodes(node, userId, blankRestrictedTools, onlyAccessNodes, accessAdminNodeIds, shopping, shoppingPeriodTool);
 		//set expand flag to true so to not look for children again:
 		((NodeModel) node.getUserObject()).setAddedDirectChildrenFlag(true);
-		getTree().getTreeState().expandNode(node);
+		getTree().expand(node);
 		if(depth > 0){
 			//recursive function stopper:
 			int newDepth = depth - 1;
@@ -241,7 +243,7 @@ public abstract class BaseTreePage extends BasePage
 			//make sure all children are collapsed and filter out the ones that need to be filtered
 			//count down backwards since we could be deleting these children nodes
 			for(int i = node.getChildCount() - 1; i >= 0; i--){
-				getTree().getTreeState().collapseNode(node.getChildAt(i));
+				getTree().collapse(node.getChildAt(i));
 				String nodeTitle = ((NodeModel) ((DefaultMutableTreeNode) node.getChildAt(i)).getUserObject()).getNode().description.toLowerCase();
 				if(filterSearch != null && !"".equals(filterSearch.trim()) && !nodeTitle.contains(filterSearch.toLowerCase())){
 					//delete this child:
