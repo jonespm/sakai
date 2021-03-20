@@ -114,10 +114,13 @@ public class TriggerEventManagerHibernateImpl extends HibernateDaoSupport implem
         // Sort by event type so that if the time of 2 events is the same the fired event happens before
         // the completed event.
         criteria.addOrder(Order.asc("eventType"));
-        if (first != null && size != null)
+        if (first != null)
         {
-            criteria.setFirstResult(first).setMaxResults(size);
+            criteria.setFirstResult(first);
         }
+        if (size != null && size > 0) {
+            criteria.setMaxResults(size);
+    	}
         return criteria.list();
     }
 
