@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentResource;
@@ -31,7 +33,6 @@ import org.sakaiproject.content.cover.ContentHostingService;
 import com.lowagie.text.DocListener;
 import com.lowagie.text.Image;
 import com.lowagie.text.html.simpleparser.StyleSheet;
-import com.lowagie.text.pdf.codec.Base64;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -88,7 +89,7 @@ import lombok.extern.slf4j.Slf4j;
 	 * 
 	 * {@inheritDoc}
 	 */
-	public void startElement(String tag, HashMap h) {
+	public void startElement(String tag, Map<String, String> h) {
 
 		if (tag.equals("img")) {
 			String src = (String)h.get("src");
@@ -183,7 +184,7 @@ import lombok.extern.slf4j.Slf4j;
 				Image img = null;
 				final String base64Data = src.substring(src.indexOf(",") + 1);
 				try {
-					img = Image.getInstance(Base64.decode(base64Data));
+					img = Image.getInstance(Base64.getDecoder().decode(base64Data));
 				} catch (Exception e) {
 					log.warn("Failed retrieving image", e.toString());
 				}

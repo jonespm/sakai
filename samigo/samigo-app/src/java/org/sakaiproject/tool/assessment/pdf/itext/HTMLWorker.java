@@ -54,6 +54,8 @@ import java.io.Reader;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 import java.util.StringTokenizer;
 
@@ -119,7 +121,7 @@ public class HTMLWorker implements SimpleXMLDocHandler, DocListener {
 		if (StringUtils.isNotBlank(fontName)) {
 			FontFactory.registerDirectories();
 			if (FontFactory.isRegistered(fontName)) {
-				HashMap fontProps = new HashMap();
+				Map<String,String> fontProps = new HashMap();
 				fontProps.put(ElementTags.FACE, fontName);
 				fontProps.put("encoding", BaseFont.IDENTITY_H);
 				cprops.addToChain("face", fontProps);
@@ -181,19 +183,28 @@ public class HTMLWorker implements SimpleXMLDocHandler, DocListener {
 	}
 
 	public void startDocument() {
-		HashMap h = new HashMap();
+		Map<String, String> h = new HashMap<>();
 		style.applyStyle("body", h);
 		cprops.addToChain("body", h);
 	}
 
-	public void startElement(String tag, HashMap h) {
+    /**
+     * @deprecated use {@link HTMLWorker#startElement(String, Map)}  } since 1.2.22
+     */
+    @Deprecated
+    @SuppressWarnings("unchecked")
+    public void startElement(String tag, HashMap h) {
+        startElement(tag, (Map<String, String>) h);
+    }
+    
+	public void startElement(String tag, Map<String, String> h) {
 		if (!tagsSupported.containsKey(tag))
 			return;
 		try {
 			style.applyStyle(tag, h);
 			String follow = (String)FactoryProperties.followTags.get(tag);
 			if (follow != null) {
-				HashMap prop = new HashMap();
+				Map<String, String> prop = new HashMap();
 				prop.put(follow, null);
 				cprops.addToChain(follow, prop);
 				return;
@@ -338,7 +349,7 @@ public class HTMLWorker implements SimpleXMLDocHandler, DocListener {
 					if (interfaceProps != null) {
 						i = (Img)interfaceProps.get("img_interface");
 						if (i != null)
-							skip = i.process(img, h, cprops, document);
+							skip = i.process(img, (HashMap) h, cprops, document);
 					}
 					if (!skip)
 						document.add(img);
@@ -587,7 +598,7 @@ public class HTMLWorker implements SimpleXMLDocHandler, DocListener {
 				if (stack.empty())
 					document.add((Element)obj);
 				else
-					((TextElementArray)stack.peek()).add(obj);
+					((TextElementArray)stack.peek()).add((Element)obj);
 				return;
 			}
 			if (tag.equals("li")) {
@@ -661,7 +672,7 @@ public class HTMLWorker implements SimpleXMLDocHandler, DocListener {
 					endElement("td");
 				pendingTR = false;
 				cprops.removeChain("tr");
-				ArrayList cells = new ArrayList();
+ 			    List<PdfPCell> cells = new ArrayList();
 				IncTable table = null;
 				while (true) {
 					Object obj = stack.pop();
