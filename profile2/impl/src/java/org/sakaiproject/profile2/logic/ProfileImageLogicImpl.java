@@ -1096,12 +1096,18 @@ public class ProfileImageLogicImpl implements ProfileImageLogic {
 			String fontFamily = sakaiProxy.getServerConfigurationParameter("profile2.avatar.initials.font", ProfileConstants.DFLT_PROFILE_AVATAR_FONT_FAMILY);
 			Graphics2D initialsg2d = bufferedImage.createGraphics();
 			initialsg2d.setPaint(Color.WHITE);
-			initialsg2d.setFont(new Font(fontFamily, Font.PLAIN, fontSize));
+			Font font = new Font(fontFamily, Font.PLAIN, fontSize);
+			initialsg2d.setFont(font);
 			FontMetrics fm = initialsg2d.getFontMetrics();
 			int x = (ProfileConstants.PROFILE_AVATAR_WIDTH/2) - fm.stringWidth(initials) / 2;
 			int y = (ProfileConstants.PROFILE_AVATAR_HEIGHT - fm.getHeight()) / 2 + fm.getAscent();
 			initialsg2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-			initialsg2d.drawString(initials, x, y);
+			try {
+				initialsg2d.drawString(initials, x, y);
+			} catch (IllegalArgumentException e) {
+				// Handle the error of missing libraries
+				log.error("Failed to render text with font: " + font + ". Might be related to missing system libraries.");
+			}
 			initialsg2d.dispose();
 
 			byte[] bytes = null;
