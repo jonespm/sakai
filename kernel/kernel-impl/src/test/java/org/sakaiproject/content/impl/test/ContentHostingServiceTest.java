@@ -17,8 +17,12 @@ package org.sakaiproject.content.impl.test;
 
 import static org.junit.runners.MethodSorters.NAME_ASCENDING;
 
+
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.*;
 import java.sql.Connection;
@@ -264,6 +268,28 @@ public class ContentHostingServiceTest extends SakaiKernelTestBase {
 		}
 	}
 
+	// To simulate an input stream that can't be reset like FileInputStream which is used elsewhere in the code
+	public class NoMarkBufferedInputStream extends BufferedInputStream {
+		public NoMarkBufferedInputStream(InputStream in) {
+			super(in);
+		}
+
+		@Override
+		public boolean markSupported() {
+			return false;
+		}
+
+		@Override
+		public synchronized void mark(int readlimit) {
+			// No-op: do nothing
+		}
+
+		@Override
+		public synchronized void reset() throws IOException {
+			throw new IOException("mark/reset not supported");
+		}
+	}
+
 	//Resources for this from http://svn.apache.org/repos/asf/tika/trunk/tika-parsers/src/test/resources/test-documents/
 	//Test mime type detector, might be useful to test it off as well
 	@Test
@@ -308,7 +334,10 @@ public class ContentHostingServiceTest extends SakaiKernelTestBase {
 			//Stored in CHS it needs a slash
 			String CHSfileName = "/"+fileName;
 			log.debug("Loading up file: {}", fileName);
-			stream = this.getClass().getResourceAsStream("/test-documents"+CHSfileName);
+			String filePath = "/test-documents"+CHSfileName;
+			long fileSize = new File(this.getClass().getResource(filePath).getFile()).length();
+			stream = new NoMarkBufferedInputStream(this.getClass().getResourceAsStream(filePath));
+			log.debug("Stream is:{} Mark Supported:{}", stream.getClass().getName(), stream.markSupported()); 
 			Assert.assertNotNull(stream);
 			ResourcePropertiesEdit props = ch.newResourceProperties();
 			props.addProperty (ResourceProperties.PROP_DISPLAY_NAME, fileName);
@@ -316,6 +345,9 @@ public class ContentHostingServiceTest extends SakaiKernelTestBase {
 			ch.addResource(CHSfileName, "", stream, props ,0);
 			//Now get it back and check the mime type
 			cr = ch.getResource(CHSfileName);
+			//Check the source filesize matches the one put into content hosting
+			log.debug("Initial size:{} Stored size:{}", fileSize, cr.getContentLength());
+			Assert.assertEquals(fileSize, cr.getContentLength());
 			log.debug("Expecting mime:{} and got {}", entry.getValue(), cr.getContentType());
 			Assert.assertEquals(entry.getValue(), cr.getContentType());
 			stream.close();
